@@ -50,6 +50,10 @@ jobs:
         run: |
           chmod +x ./engines/stockfish
 
+      - name: Set Executable Permissions
+        run: |
+          chmod +x ./engines/fsf
+
       - name: Run Bot
         run: |
           echo "Starting bot..."
