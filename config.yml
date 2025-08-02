@@ -73,50 +73,6 @@ opening_books:
         - win
         - DefaultBook
         - BackupBook
-    antichess_white:
-      selection: best_move
-      names:
-        - whiteanti
-    antichess_black:
-      selection: best_move
-      names:
-        - blackanti
-    3check_white:
-      selection: best_move
-      names:
-        - white3check
-    kingofthehill_black:
-      selection: best_move
-      names:
-        - blackkingofhill
-    kingofthehill_white:
-      selection: best_move
-      names:
-        - whitekingofhill
-    atomic_white:
-      selection: best_move
-      names:
-        - whiteatomic
-    crazyhouse:
-      selection: best_move
-      names:
-        - crazyhouse
-    chess960_white:
-      selection: best_move
-      names:
-        - whitechess960
-    chess960_black:
-      selection: best_move
-      names:
-        - blackchess960
-    atomic_black:
-      selection: best_move
-      names:
-        - blackatomic
-    horde_white:
-      selection: best_move
-      names:
-        - whitehorde
     
 #   Use the same pattern for 'bullet', 'blitz', 'rapid', 'classical',
 #   'antichess', 'atomic', 'chess960', 'crazyhouse', 'horde', 'kingofthehill', 'racingkings' and '3check' as well.
@@ -251,16 +207,3 @@ books:
   DefaultBook: "./engines/Book2.bin"
   BackupBook: "./engines/Book3.bin"
   win: "./engines/win.bin"
-  whiteanti: "./engines/whiteanti.bin"
-  blackanti: "./engines/blackanti.bin"
-  blackrk: "./engines/blackrk.bin"
-  whiterk: "./engines/whiterk.bin"
-  whiteatomic: "./engines/whiteatomic.bin"
-  blackatomic: "./engines/blackatomic.bin"
-  whitehorde: "./engines/whitehorde.bin"
-  horde: "./engines/horde.bin"
-  chess960: "./engines/chess960.bin"
-  whitekingofhill: "./engines/whitekingofhill.bin"
-  blackkingofhill: "./engines/blackkingofhill.bin"
-  crazyhouse: "./engines/crazyhouse.bin"
-  white3check: "./engines/white3check.bin"
