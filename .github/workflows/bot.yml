@@ -52,7 +52,7 @@ jobs:
 
       - name: Set Executable Permissions
         run: |
-          chmod +x ./engines/fsf
+          chmod +x ./engines/fairy-sf
 
       - name: Run Bot
         run: |
