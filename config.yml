@@ -13,16 +13,16 @@ engines:
       Move Overhead: 100                  # Increase if your bot flags games too often.
   variants:                               # Engine used for standard chess and when no suitable special engine is configured.
     dir: "./engines"                      # Directory containing the engine.
-    name: "fsf"          # Binary name of the engine to use (update for Windows).
+    name: "fairy-sf"          # Binary name of the engine to use (update for Windows).
     ponder: true                          # Think on opponent's time.
     silence_stderr: false                 # Suppresses stderr output.
     move_overhead_multiplier: 1.0         # Increase if your bot flags games too often. Default move overhead is 1 second per 1 minute initital time.
     uci_options:                          # Arbitrary UCI options passed to the engine. (Commenting allowed)
-      Threads: 6                          # Max CPU threads the engine can use.
-      Hash: 2048                           # Max memory (in megabytes) the engine can allocate.
+      Threads: 8                         # Max CPU threads the engine can use.
+      Hash: 4096                           # Max memory (in megabytes) the engine can allocate.
       Move Overhead: 100                  # Increase if your bot flags games too often.
       Use NNUE: true
-      EvalFile: "3check-cb5f517c228b.nnue:antichess-dd3cbe53cd4e.nnue:atomic-2cf13ff256cc.nnue:crazyhouse-8ebf84784ad2.nnue:horde-28173ddccabe.nnue:kingofthehill-978b86d0e6a4.nnue:racingkings-636b95f085e3.nnue"
+      EvalFile: "3check-cb5f517c228b.nnue:antichess-dd3cbe53cd4e.nnue:atomic-2cf13ff256cc.nnue:crazyhouse-8ebf84784ad2.nnue:horde-28173ddccabe.nnue:kingofthehill-978b86d0e6a4.nnue:racingkings-636b95f085e3.nnue"      
 # Use the same pattern for 'bullet', 'blitz', 'rapid', 'classical',
 # 'antichess', 'atomic', 'chess960', 'crazyhouse', 'horde', 'kingofthehill', 'racingkings' and '3check' as well.
 # Append '_white' or '_black' to use the engine only as the specific color.
@@ -73,6 +73,18 @@ opening_books:
         - win
         - DefaultBook
         - BackupBook
+    antichess_white:
+      selection: best_move
+      names:
+        - whiteanti
+    antichess_black:
+      selection: best_move
+      names:
+        - blackanti
+    3check_white:
+      selection: best_move
+      names:
+        - white3check
     
 #   Use the same pattern for 'bullet', 'blitz', 'rapid', 'classical',
 #   'antichess', 'atomic', 'chess960', 'crazyhouse', 'horde', 'kingofthehill', 'racingkings' and '3check' as well.
@@ -207,3 +219,7 @@ books:
   DefaultBook: "./engines/Book2.bin"
   BackupBook: "./engines/Book3.bin"
   win: "./engines/win.bin"
+  whiteanti: "./engines/whiteanti.bin"
+  blackanti: "./engines/blackanti.bin"
+  crazyhouse: "./engines/crazyhouse.bin"
+  white3check: "./engines/white3check.bin"
