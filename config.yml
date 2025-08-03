@@ -13,7 +13,7 @@ engines:
       Move Overhead: 100                  # Increase if your bot flags games too often.
   variants:                               # Engine used for standard chess and when no suitable special engine is configured.
     dir: "./engines"                      # Directory containing the engine.
-    name: "fairy-sf"          # Binary name of the engine to use (update for Windows).
+    name: "fairy-stockfish_x86-64-modern"          # Binary name of the engine to use (update for Windows).
     ponder: true                          # Think on opponent's time.
     silence_stderr: false                 # Suppresses stderr output.
     move_overhead_multiplier: 1.0         # Increase if your bot flags games too often. Default move overhead is 1 second per 1 minute initital time.
@@ -73,18 +73,6 @@ opening_books:
         - win
         - DefaultBook
         - BackupBook
-    antichess_white:
-      selection: best_move
-      names:
-        - whiteanti
-    antichess_black:
-      selection: best_move
-      names:
-        - blackanti
-    3check_white:
-      selection: best_move
-      names:
-        - white3check
     
 #   Use the same pattern for 'bullet', 'blitz', 'rapid', 'classical',
 #   'antichess', 'atomic', 'chess960', 'crazyhouse', 'horde', 'kingofthehill', 'racingkings' and '3check' as well.
