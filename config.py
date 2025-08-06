@@ -421,6 +421,8 @@ class Config:
             ['concurrency', int, '"concurrency" must be an integer.'],
             ['bullet_with_increment_only', bool, '"bullet_with_increment_only" must be a bool.'],
             ['variants', list, '"variants" must be a list of variants.'],
+            ['min_rating_diff', int, '"min_rating_diff" must be an integer.'],
+            ['max_rating_diff', int, '"max_rating_diff" must be an integer.'],
             ['time_controls', list | None, '"time_controls" must be a list of speeds or time controls.'],
             ['bot_modes', list | None, '"bot_modes" must be a list of game modes.'],
             ['human_modes', list | None, '"human_modes" must be a list of game modes.']]
@@ -441,7 +443,9 @@ class Config:
                                 challenge_section['variants'],
                                 challenge_section['time_controls'] or [],
                                 challenge_section['bot_modes'] or [],
-                                challenge_section['human_modes'] or [])
+                                challenge_section['human_modes'] or [],
+                                challenge_section.get('min_rating_diff'),
+                                challenge_section.get('max_rating_diff'))
 
     @staticmethod
     def _get_matchmaking_config(matchmaking_section: dict[str, Any]) -> Matchmaking_Config:
