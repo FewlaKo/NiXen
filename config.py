@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 from configs import (Books_Config, Challenge_Config, ChessDB_Config, Engine_Config, Gaviota_Config,
-                     Lichess_Cloud_Config, Limit_Config, Matchmaking_Config, Matchmaking_Type_Config, Messages_Config,
+                     Lichess_Cloud_Config, Matchmaking_Config, Matchmaking_Type_Config, Messages_Config,
                      Offer_Draw_Config, Online_EGTB_Config, Online_Moves_Config, Opening_Books_Config,
                      Opening_Explorer_Config, Resign_Config, Syzygy_Config)
 
