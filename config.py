@@ -416,32 +416,33 @@ class Config:
                              resign_section['against_humans'])
 
     @staticmethod
-    def _get_challenge_config(challenge_section: dict[str, Any]) -> Challenge_Config:
-        challenge_sections = [
-            ['concurrency', int, '"concurrency" must be an integer.'],
-            ['bullet_with_increment_only', bool, '"bullet_with_increment_only" must be a bool.'],
-            ['variants', list, '"variants" must be a list of variants.'],
-            ['time_controls', list | None, '"time_controls" must be a list of speeds or time controls.'],
-            ['bot_modes', list | None, '"bot_modes" must be a list of game modes.'],
-            ['human_modes', list | None, '"human_modes" must be a list of game modes.']]
-
-        for subsection in challenge_sections:
-            if subsection[0] not in challenge_section:
-                raise RuntimeError(f'Your config does not have required `challenge` subsection `{subsection[0]}`.')
-
-            if not isinstance(challenge_section[subsection[0]], subsection[1]):
-                raise TypeError(f'`challenge` subsection {subsection[2]}')
-
-        return Challenge_Config(challenge_section['concurrency'],
-                                challenge_section['bullet_with_increment_only'],
-                                challenge_section.get('min_increment'),
-                                challenge_section.get('max_increment'),
-                                challenge_section.get('min_initial'),
-                                challenge_section.get('max_initial'),
-                                challenge_section['variants'],
-                                challenge_section['time_controls'] or [],
-                                challenge_section['bot_modes'] or [],
-                                challenge_section['human_modes'] or [])
+def _get_challenge_config(challenge_section: dict[str, Any]) -> Challenge_Config:
+    challenge_sections = [
+        ['concurrency', int, '"concurrency" must be an integer.'],
+        ['bullet_with_increment_only', bool, '"bullet_with_increment_only" must be a bool.'],
+        ['min_rating_diff', int, '"min_rating_diff" must be an integer.'],
+        ['max_rating_diff', int, '"max_rating_diff" must be an integer.'],
+        ['variants', list, '"variants" must be a list of variants.'],
+        ['time_controls', list | None, '"time_controls" must be a list of speeds or time controls.'],
+        ['bot_modes', list | None, '"bot_modes" must be a list of game modes.'],
+        ['human_modes', list | None, '"human_modes" must be a list of game modes.']]
+    for subsection in challenge_sections:
+        if subsection[0] not in challenge_section:
+            raise RuntimeError(f'Your config does not have required `challenge` subsection `{subsection[0]}`.')
+        if not isinstance(challenge_section[subsection[0]], subsection[1]):
+            raise TypeError(f'`challenge` subsection {subsection[2]}')
+    return Challenge_Config(challenge_section['concurrency'],
+                            challenge_section['bullet_with_increment_only'],
+                            challenge_section.get('min_increment'),
+                            challenge_section.get('max_increment'),
+                            challenge_section.get('min_initial'),
+                            challenge_section.get('max_initial'),
+                            challenge_section['variants'],
+                            challenge_section['time_controls'] or [],
+                            challenge_section['bot_modes'] or [],
+                            challenge_section['human_modes'] or [],
+                            challenge_section.get('min_rating_diff'),
+                            challenge_section.get('max_rating_diff'))
 
     @staticmethod
     def _get_matchmaking_config(matchmaking_section: dict[str, Any]) -> Matchmaking_Config:
