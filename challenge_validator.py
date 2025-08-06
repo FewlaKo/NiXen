@@ -16,6 +16,7 @@ class Challenge_Validator:
         self.max_initial = 315360000 if config.challenge.max_initial is None else config.challenge.max_initial
 
     def get_decline_reason(self, challenge_event: dict[str, Any]) -> Decline_Reason | None:
+        print("Processing challenge...")
         speed: str = challenge_event['speed']
         if speed == 'ultraBullet':
             print('Time control "UltraBullet" is not allowed for bots.')
@@ -96,6 +97,7 @@ class Challenge_Validator:
             return Decline_Reason.RATED
 
         # Custom rating checks with debug
+        print("Checking ratings...")
         challenger_rating = challenge_event['challenger']['rating']
         bot_rating = self.game_manager.get_bot_rating()
         rating_diff = challenger_rating - bot_rating
@@ -108,7 +110,7 @@ class Challenge_Validator:
                 print(f'Rating difference {rating_diff} exceeds allowed range ({self.config.challenge.min_rating_diff} to {self.config.challenge.max_rating_diff}) for bot challenge.')
                 return Decline_Reason.GENERIC
         # No rating check for humans, accept all
-
+        print("Challenge processed, no decline reason found.")
         return None
 
     def _get_time_controls(self, speeds: list[str]) -> list[tuple[int, int]]:
