@@ -1,5 +1,4 @@
 from typing import Any
-
 from config import Config
 from enums import Decline_Reason
 from game_manager import Game_Manager
@@ -35,9 +34,6 @@ class Challenge_Validator:
             print('Concurrency exhausted due to tournaments.')
             return Decline_Reason.LATER
 
-        if challenge_event['challenger']['id'] in self.config.whitelist:
-            return
-
         if challenge_event['challenger']['id'] in self.config.blacklist:
             print('Challenger is blacklisted.')
             return Decline_Reason.GENERIC
@@ -52,7 +48,6 @@ class Challenge_Validator:
             if is_bot:
                 print('Bots are not allowed according to config.')
                 return Decline_Reason.NO_BOT
-
             print('Only bots are allowed according to config.')
             return Decline_Reason.ONLY_BOT
 
@@ -95,6 +90,21 @@ class Challenge_Validator:
         if is_casual and 'casual' not in modes:
             print('Casual is not allowed according to config.')
             return Decline_Reason.RATED
+
+        # Custom rating checks
+        challenger_rating = challenge_event['challenger']['rating']
+        if is_bot:
+            if challenger_rating in [2000, 2800, 3000]:
+                print(f'Challenge from high-rated bot {challenge_event["challenger"]["name"]} declined.')
+                return Decline_Reason.GENERIC
+            bot_rating = self.game_manager.get_bot_rating()  # Assume this method exists or add it
+            rating_diff = challenger_rating - bot_rating
+            if rating_diff < self.config.challenge.min_rating_diff or rating_diff > self.config.challenge.max_rating_diff:
+                print(f'Rating difference {rating_diff} exceeds allowed range (-90 to 90) for bot challenge.')
+                return Decline_Reason.GENERIC
+        # No rating check for humans, accept all
+
+        return None
 
     def _get_time_controls(self, speeds: list[str]) -> list[tuple[int, int]]:
         time_controls: list[tuple[int, int]] = []
