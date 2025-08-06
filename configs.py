@@ -127,6 +127,8 @@ class Challenge_Config:
     time_controls: list[str]
     bot_modes: list[str]
     human_modes: list[str]
+    min_rating_diff: int | None  # New field for minimum rating difference
+    max_rating_diff: int | None  # New field for maximum rating difference
 
 
 @dataclass
