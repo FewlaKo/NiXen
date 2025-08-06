@@ -130,53 +130,41 @@ class Config:
                                    f'Try: chmod +x {settings["path"]}')
 
             engine_configs[key] = Engine_Config(settings['path'],
-                                                settings['ponder'],
-                                                settings['silence_stderr'],
-                                                settings.get('move_overhead_multiplier'),
-                                                settings['uci_options'] or {})
+                                               settings['ponder'],
+                                               settings['silence_stderr'],
+                                               settings.get('move_overhead_multiplier'),
+                                               settings.get('uci_options', {}))
 
         return engine_configs
 
     @staticmethod
     def _get_syzygy_configs(syzygy_section: dict[str, dict[str, Any]]) -> dict[str, Syzygy_Config]:
-        syzygy_sections = [
-            ['enabled', bool, '"enabled" must be a bool.'],
-            ['paths', list, '"paths" must be a list.'],
-            ['max_pieces', int, '"max_pieces" must be an integer.'],
-            ['instant_play', bool, '"instant_play" must be a bool.']]
-
         syzygy_configs: dict[str, Syzygy_Config] = {}
         for key, settings in syzygy_section.items():
+            syzygy_sections = [
+                ['enabled', bool, '"enabled" must be a bool.'],
+                ['paths', list, '"paths" must be a list of strings wrapped in quotes.'],
+                ['max_pieces', int, '"max_pieces" must be an integer.'],
+                ['instant_play', bool, '"instant_play" must be a bool.']]
             for subsection in syzygy_sections:
                 if subsection[0] not in settings:
-                    raise RuntimeError('Your config does not have required '
-                                       f'`syzygy` `{key}` subsection `{subsection[0]}`.')
+                    raise RuntimeError(f'Your "syzygy" "{key}" does not have required field `{subsection[0]}`.')
 
                 if not isinstance(settings[subsection[0]], subsection[1]):
                     raise TypeError(f'`syzygy` `{key}` subsection {subsection[2]}')
-
-            if not settings['enabled']:
-                syzygy_configs[key] = Syzygy_Config(False, [], 0, False)
-                continue
-
-            for path in settings['paths']:
-                if not os.path.isdir(path):
-                    raise RuntimeError(f'Your {key} syzygy path "{path}" is not a directory.')
 
             syzygy_configs[key] = Syzygy_Config(settings['enabled'],
                                                 settings['paths'],
                                                 settings['max_pieces'],
                                                 settings['instant_play'])
-
         return syzygy_configs
 
     @staticmethod
     def _get_gaviota_config(gaviota_section: dict[str, Any]) -> Gaviota_Config:
         gaviota_sections = [
             ['enabled', bool, '"enabled" must be a bool.'],
-            ['paths', list, '"paths" must be a list.'],
+            ['paths', list, '"paths" must be a list of strings wrapped in quotes.'],
             ['max_pieces', int, '"max_pieces" must be an integer.']]
-
         for subsection in gaviota_sections:
             if subsection[0] not in gaviota_section:
                 raise RuntimeError(f'Your config does not have required `gaviota` subsection `{subsection[0]}`.')
@@ -184,194 +172,66 @@ class Config:
             if not isinstance(gaviota_section[subsection[0]], subsection[1]):
                 raise TypeError(f'`gaviota` subsection {subsection[2]}')
 
-        if gaviota_section['enabled']:
-            for path in gaviota_section['paths']:
-                if not os.path.isdir(path):
-                    raise RuntimeError(f'Your gaviota directory "{path}" is not a directory.')
-
-        return Gaviota_Config(gaviota_section['enabled'], gaviota_section['paths'], gaviota_section['max_pieces'])
+        return Gaviota_Config(gaviota_section['enabled'],
+                              gaviota_section['paths'],
+                              gaviota_section['max_pieces'])
 
     @staticmethod
-    def _get_opening_books_config(config: dict[str, Any]) -> Opening_Books_Config:
+    def _get_opening_books_config(yaml_config: dict[str, Any]) -> Opening_Books_Config:
+        opening_books_section = yaml_config['opening_books']
         opening_books_sections = [
             ['enabled', bool, '"enabled" must be a bool.'],
             ['priority', int, '"priority" must be an integer.'],
+            ['read_learn', bool, '"read_learn" must be a bool.'],
             ['books', dict, '"books" must be a dictionary with indented keys followed by colons.']]
-
         for subsection in opening_books_sections:
-            if subsection[0] not in config['opening_books']:
+            if subsection[0] not in opening_books_section:
                 raise RuntimeError(f'Your config does not have required `opening_books` subsection `{subsection[0]}`.')
 
-            if not isinstance(config['opening_books'][subsection[0]], subsection[1]):
+            if not isinstance(opening_books_section[subsection[0]], subsection[1]):
                 raise TypeError(f'`opening_books` subsection {subsection[2]}')
 
-        if not config['opening_books']['enabled']:
-            return Opening_Books_Config(False, 0, None, {})
-
-        opening_book_types_sections = [
-            ['selection', str, '"selection" must be one of "weighted_random", "uniform_random" or "best_move".'],
-            ['names', list, '"names" must be a list of book names.']]
-
-        books: dict[str, Books_Config] = {}
-        for section, settings in config['opening_books']['books'].items():
-            for subsection in opening_book_types_sections:
+        books_configs: dict[str, Books_Config] = {}
+        for key, settings in opening_books_section['books'].items():
+            books_sections = [
+                ['selection', str, '"selection" must be "weighted_random", "uniform_random" or "best_move".'],
+                ['max_depth', int, '"max_depth" must be an integer.'],
+                ['names', dict, '"names" must be a dictionary with indented keys followed by colons.']]
+            for subsection in books_sections:
                 if subsection[0] not in settings:
-                    raise RuntimeError(f'Your `opening_books` `books` `{section}` section'
-                                       f'does not have required field `{subsection[0]}`.')
+                    raise RuntimeError(f'Your "opening_books" "{key}" does not have required field `{subsection[0]}`.')
 
                 if not isinstance(settings[subsection[0]], subsection[1]):
-                    raise TypeError(f'`opening_books` `books` `{section}` field {subsection[2]}')
+                    raise TypeError(f'`opening_books` `{key}` subsection {subsection[2]}')
 
-            names: dict[str, str] = {}
-            for book_name in settings['names']:
-                if book_name not in config['books']:
-                    raise RuntimeError(f'The book "{book_name}" is not defined in the books section.')
+            books_configs[key] = Books_Config(settings['selection'],
+                                             settings.get('max_depth'),
+                                             settings['names'])
 
-                if not os.path.isfile(config['books'][book_name]):
-                    raise RuntimeError(f'The book "{book_name}" at "{config["books"][book_name]}" does not exist.')
-
-                names[book_name] = config['books'][book_name]
-
-            books[section] = Books_Config(settings['selection'], settings.get('max_depth'), names)
-
-        return Opening_Books_Config(config['opening_books']['enabled'],
-                                    config['opening_books']['priority'],
-                                    config['opening_books'].get('read_learn'),
-                                    books)
+        return Opening_Books_Config(opening_books_section['enabled'],
+                                    opening_books_section['priority'],
+                                    opening_books_section.get('read_learn'),
+                                    books_configs)
 
     @staticmethod
-    def _get_opening_explorer_config(opening_explorer_section: dict[str, Any]) -> Opening_Explorer_Config:
-        opening_explorer_sections = [
-            ['enabled', bool, '"enabled" must be a bool.'],
-            ['priority', int, '"priority" must be an integer.'],
-            ['only_without_book', bool, '"only_without_book" must be a bool.'],
-            ['use_for_variants', bool, '"use_for_variants" must be a bool.'],
-            ['min_time', int, '"min_time" must be an integer.'],
-            ['timeout', int, '"timeout" must be an integer.'],
-            ['min_games', int, '"min_games" must be an integer.'],
-            ['only_with_wins', bool, '"only_with_wins" must be a bool.'],
-            ['selection', str, '"selection" must be "performance" or "win_rate".'],
-            ['anti', bool, '"anti" must be a bool.']]
-
-        for subsection in opening_explorer_sections:
-            if subsection[0] not in opening_explorer_section:
-                raise RuntimeError('Your config does not have required '
-                                   f'`online_moves` `opening_explorer` field `{subsection[0]}`.')
-
-            if not isinstance(opening_explorer_section[subsection[0]], subsection[1]):
-                raise TypeError(f'`online_moves` `opening_explorer` field {subsection[2]}')
-
-        return Opening_Explorer_Config(opening_explorer_section['enabled'],
-                                       opening_explorer_section['priority'],
-                                       opening_explorer_section['only_without_book'],
-                                       opening_explorer_section['use_for_variants'],
-                                       opening_explorer_section['min_time'],
-                                       opening_explorer_section['timeout'],
-                                       opening_explorer_section['min_games'],
-                                       opening_explorer_section['only_with_wins'],
-                                       opening_explorer_section['selection'],
-                                       opening_explorer_section['anti'],
-                                       opening_explorer_section.get('max_depth'),
-                                       opening_explorer_section.get('max_moves'))
-
-    @staticmethod
-    def _get_lichess_cloud_config(lichess_cloud_section: dict[str, Any]) -> Lichess_Cloud_Config:
-        lichess_cloud_sections = [
-            ['enabled', bool, '"enabled" must be a bool.'],
-            ['priority', int, '"priority" must be an integer.'],
-            ['only_without_book', bool, '"only_without_book" must be a bool.'],
-            ['use_for_variants', bool, '"use_for_variants" must be a bool.'],     
-            ['min_eval_depth', int, '"min_eval_depth" must be an integer.'],
-            ['min_time', int, '"min_time" must be an integer.'],
-            ['timeout', int, '"timeout" must be an integer.']]
-
-        for subsection in lichess_cloud_sections:
-            if subsection[0] not in lichess_cloud_section:
-                raise RuntimeError('Your config does not have required '
-                                   f'`online_moves` `lichess_cloud` field `{subsection[0]}`.')
-
-            if not isinstance(lichess_cloud_section[subsection[0]], subsection[1]):
-                raise TypeError(f'`online_moves` `lichess_cloud` field {subsection[2]}')
-
-        return Lichess_Cloud_Config(lichess_cloud_section['enabled'],
-                                    lichess_cloud_section['priority'],
-                                    lichess_cloud_section['only_without_book'],
-                                    lichess_cloud_section['use_for_variants'],
-                                    lichess_cloud_section['min_eval_depth'],
-                                    lichess_cloud_section['min_time'],
-                                    lichess_cloud_section['timeout'],
-                                    lichess_cloud_section.get('max_depth'),
-                                    lichess_cloud_section.get('max_moves'))
-
-    @staticmethod
-    def _get_chessdb_config(chessdb_section: dict[str, Any]) -> ChessDB_Config:
-        chessdb_sections = [
-            ['enabled', bool, '"enabled" must be a bool.'],
-            ['priority', int, '"priority" must be an integer.'],
-            ['only_without_book', bool, '"only_without_book" must be a bool.'],
-            ['min_candidates', int, '"min_candidates" must be an integer.'],
-            ['min_time', int, '"min_time" must be an integer.'],
-            ['timeout', int, '"timeout" must be an integer.'],
-            ['selection', str, '"selection" must be one of "optimal", "best" or "good".']]
-
-        for subsection in chessdb_sections:
-            if subsection[0] not in chessdb_section:
-                raise RuntimeError('Your config does not have required '
-                                   f'`online_moves` `chessdb` field `{subsection[0]}`.')
-
-            if not isinstance(chessdb_section[subsection[0]], subsection[1]):
-                raise TypeError(f'`online_moves` `chessdb` field {subsection[2]}')
-
-        return ChessDB_Config(chessdb_section['enabled'],
-                              chessdb_section['priority'],
-                              chessdb_section['only_without_book'],
-                              chessdb_section['min_candidates'],
-                              chessdb_section['min_time'],
-                              chessdb_section['timeout'],
-                              chessdb_section['selection'],
-                              chessdb_section.get('max_depth'),
-                              chessdb_section.get('max_moves'))
-
-    @staticmethod
-    def _get_online_egtb_config(online_egtb_section: dict[str, Any]) -> Online_EGTB_Config:
-        online_egtb_sections = [
-            ['enabled', bool, '"enabled" must be a bool.'],
-            ['min_time', int, '"min_time" must be an integer.'],
-            ['timeout', int, '"timeout" must be an integer.']]
-
-        for subsection in online_egtb_sections:
-            if subsection[0] not in online_egtb_section:
-                raise RuntimeError('Your config does not have required '
-                                   f'`online_moves` `online_egtb` field `{subsection[0]}`.')
-
-            if not isinstance(online_egtb_section[subsection[0]], subsection[1]):
-                raise TypeError(f'`online_moves` `online_egtb` field {subsection[2]}')
-
-        return Online_EGTB_Config(online_egtb_section['enabled'],
-                                  online_egtb_section['min_time'],
-                                  online_egtb_section['timeout'])
-
-    @staticmethod
-    def _get_online_moves_config(online_moves_section: dict[str, dict[str, Any]]) -> Online_Moves_Config:
+    def _get_online_moves_config(online_moves_section: dict[str, Any]) -> Online_Moves_Config:
         online_moves_sections = [
-            ['opening_explorer', dict, ('"opening_explorer" must be a dictionary '
-                                        'with indented keys followed by colons.')],
-            ['chessdb', dict, '"chessdb" must be a dictionary with indented keys followed by colons.'],
+            ['opening_explorer', dict, '"opening_explorer" must be a dictionary with indented keys followed by colons.'],
             ['lichess_cloud', dict, '"lichess_cloud" must be a dictionary with indented keys followed by colons.'],
+            ['chessdb', dict, '"chessdb" must be a dictionary with indented keys followed by colons.'],
             ['online_egtb', dict, '"online_egtb" must be a dictionary with indented keys followed by colons.']]
-
         for subsection in online_moves_sections:
             if subsection[0] not in online_moves_section:
-                raise RuntimeError('Your config does not have required '
-                                   f'`online_moves` subsection `{subsection[0]}`.')
+                raise RuntimeError(f'Your config does not have required `online_moves` subsection `{subsection[0]}`.')
 
             if not isinstance(online_moves_section[subsection[0]], subsection[1]):
                 raise TypeError(f'`online_moves` subsection {subsection[2]}')
 
-        return Online_Moves_Config(Config._get_opening_explorer_config(online_moves_section['opening_explorer']),
-                                   Config._get_lichess_cloud_config(online_moves_section['lichess_cloud']),
-                                   Config._get_chessdb_config(online_moves_section['chessdb']),
-                                   Config._get_online_egtb_config(online_moves_section['online_egtb']))
+        return Online_Moves_Config(
+            Opening_Explorer_Config(**online_moves_section['opening_explorer']),
+            Lichess_Cloud_Config(**online_moves_section['lichess_cloud']),
+            ChessDB_Config(**online_moves_section['chessdb']),
+            Online_EGTB_Config(**online_moves_section['online_egtb']))
 
     @staticmethod
     def _get_offer_draw_config(offer_draw_section: dict[str, Any]) -> Offer_Draw_Config:
@@ -381,7 +241,6 @@ class Config:
             ['consecutive_moves', int, '"consecutive_moves" must be an integer.'],
             ['min_game_length', int, '"min_game_length" must be an integer.'],
             ['against_humans', bool, '"against_humans" must be a bool.']]
-
         for subsection in offer_draw_sections:
             if subsection[0] not in offer_draw_section:
                 raise RuntimeError(f'Your config does not have required `offer_draw` subsection `{subsection[0]}`.')
@@ -402,7 +261,6 @@ class Config:
             ['score', int, '"score" must be an integer.'],
             ['consecutive_moves', int, '"consecutive_moves" must be an integer.'],
             ['against_humans', bool, '"against_humans" must be a bool.']]
-
         for subsection in resign_sections:
             if subsection[0] not in resign_section:
                 raise RuntimeError(f'Your config does not have required `resign` subsection `{subsection[0]}`.')
@@ -416,33 +274,35 @@ class Config:
                              resign_section['against_humans'])
 
     @staticmethod
-def _get_challenge_config(challenge_section: dict[str, Any]) -> Challenge_Config:
-    challenge_sections = [
-        ['concurrency', int, '"concurrency" must be an integer.'],
-        ['bullet_with_increment_only', bool, '"bullet_with_increment_only" must be a bool.'],
-        ['min_rating_diff', int, '"min_rating_diff" must be an integer.'],
-        ['max_rating_diff', int, '"max_rating_diff" must be an integer.'],
-        ['variants', list, '"variants" must be a list of variants.'],
-        ['time_controls', list | None, '"time_controls" must be a list of speeds or time controls.'],
-        ['bot_modes', list | None, '"bot_modes" must be a list of game modes.'],
-        ['human_modes', list | None, '"human_modes" must be a list of game modes.']]
-    for subsection in challenge_sections:
-        if subsection[0] not in challenge_section:
-            raise RuntimeError(f'Your config does not have required `challenge` subsection `{subsection[0]}`.')
-        if not isinstance(challenge_section[subsection[0]], subsection[1]):
-            raise TypeError(f'`challenge` subsection {subsection[2]}')
-    return Challenge_Config(challenge_section['concurrency'],
-                            challenge_section['bullet_with_increment_only'],
-                            challenge_section.get('min_increment'),
-                            challenge_section.get('max_increment'),
-                            challenge_section.get('min_initial'),
-                            challenge_section.get('max_initial'),
-                            challenge_section['variants'],
-                            challenge_section['time_controls'] or [],
-                            challenge_section['bot_modes'] or [],
-                            challenge_section['human_modes'] or [],
-                            challenge_section.get('min_rating_diff'),
-                            challenge_section.get('max_rating_diff'))
+    def _get_challenge_config(challenge_section: dict[str, Any]) -> Challenge_Config:
+        challenge_sections = [
+            ['concurrency', int, '"concurrency" must be an integer.'],
+            ['bullet_with_increment_only', bool, '"bullet_with_increment_only" must be a bool.'],
+            ['min_rating_diff', int, '"min_rating_diff" must be an integer.'],
+            ['max_rating_diff', int, '"max_rating_diff" must be an integer.'],
+            ['variants', list, '"variants" must be a list of variants.'],
+            ['time_controls', list | None, '"time_controls" must be a list of speeds or time controls.'],
+            ['bot_modes', list | None, '"bot_modes" must be a list of game modes.'],
+            ['human_modes', list | None, '"human_modes" must be a list of game modes.']]
+        for subsection in challenge_sections:
+            if subsection[0] not in challenge_section:
+                raise RuntimeError(f'Your config does not have required `challenge` subsection `{subsection[0]}`.')
+
+            if not isinstance(challenge_section[subsection[0]], subsection[1]):
+                raise TypeError(f'`challenge` subsection {subsection[2]}')
+
+        return Challenge_Config(challenge_section['concurrency'],
+                                challenge_section['bullet_with_increment_only'],
+                                challenge_section.get('min_increment'),
+                                challenge_section.get('max_increment'),
+                                challenge_section.get('min_initial'),
+                                challenge_section.get('max_initial'),
+                                challenge_section['variants'],
+                                challenge_section['time_controls'] or [],
+                                challenge_section['bot_modes'] or [],
+                                challenge_section['human_modes'] or [],
+                                challenge_section.get('min_rating_diff'),
+                                challenge_section.get('max_rating_diff'))
 
     @staticmethod
     def _get_matchmaking_config(matchmaking_section: dict[str, Any]) -> Matchmaking_Config:
@@ -451,7 +311,6 @@ def _get_challenge_config(challenge_section: dict[str, Any]) -> Challenge_Config
             ['timeout', int, '"timeout" must be an integer.'],
             ['selection', str, '"selection" must be "weighted_random" or "sequential".'],
             ['types', dict, '"types" must be a dictionary with indented keys followed by colons.']]
-
         for subsection in matchmaking_sections:
             if subsection[0] not in matchmaking_section:
                 raise RuntimeError(f'Your config does not have required `matchmaking` subsection `{subsection[0]}`.')
@@ -492,7 +351,6 @@ def _get_challenge_config(challenge_section: dict[str, Any]) -> Challenge_Config
             ['goodbye', str, '"goodbye" must be a string wrapped in quotes.'],
             ['greeting_spectators', str, '"greeting_spectators" must be a string wrapped in quotes.'],
             ['goodbye_spectators', str, '"goodbye_spectators" must be a string wrapped in quotes.']]
-
         for subsection in messages_sections:
             if subsection[0] in messages_section:
                 if not isinstance(messages_section[subsection[0]], subsection[1]):
